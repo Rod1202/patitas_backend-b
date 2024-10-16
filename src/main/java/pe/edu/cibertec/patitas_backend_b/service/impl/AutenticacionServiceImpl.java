@@ -1,17 +1,14 @@
 package pe.edu.cibertec.patitas_backend_b.service.impl;
 
+import pe.edu.cibertec.patitas_backend_b.dto.LoginRequestDTO;
+import pe.edu.cibertec.patitas_backend_b.dto.LogoutRequestDTO;
+import pe.edu.cibertec.patitas_backend_b.service.AutenticacionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
-import pe.edu.cibertec.patitas_backend_b.dto.LoginRequestDTO;
-import pe.edu.cibertec.patitas_backend_b.dto.LogoutRequestDTO;
-import pe.edu.cibertec.patitas_backend_b.service.AutenticacionService;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,38 +55,29 @@ public class AutenticacionServiceImpl implements AutenticacionService {
 
     @Override
     public Date cerrarSesionUsuario(LogoutRequestDTO logoutRequestDTO) throws IOException {
+        Date fechaLogout = new Date(); // Obtener la fecha actual
 
-        Date fechaLogout = null;
-        Resource resource = resourceLoader.getResource("classpath:auditoria.txt");
-        Path rutaArchivo = Paths.get(resource.getURI());
+        // Ruta del archivo auditoria.txt
+        String filePath = "src/main/resources/auditoria.txt";
 
-        try (BufferedWriter bw = Files.newBufferedWriter(rutaArchivo, StandardOpenOption.APPEND)) {
+        // Preparar la línea a escribir
+        String registro = String.format("%s;%s;%s%n",
+                logoutRequestDTO.tipoDocumento(),
+                logoutRequestDTO.numeroDocumento(),
+                fechaLogout.toString());
 
-            // definir fecha
-            fechaLogout = new Date();
-
-            // preparar linea
-            StringBuilder sb = new StringBuilder();
-            sb.append(logoutRequestDTO.tipoDocumento());
-            sb.append(";");
-            sb.append(logoutRequestDTO.numeroDocumento());
-            sb.append(";");
-            sb.append(fechaLogout);
-
-            // escribir linea
-            bw.write(sb.toString());
-            bw.newLine();
-            System.out.println(sb.toString());
-
+        // Escribir en el archivo auditoria.txt
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filePath, true))) {
+            writer.write(registro); // Escribir la línea en el archivo
+            System.out.println("Registro de auditoría: " + registro); // Mensaje de depuración
         } catch (IOException e) {
-
-            fechaLogout = null;
-            throw new IOException(e);
-
+            System.out.println("Error al registrar en auditoría: " + e.getMessage());
+            throw new IOException("Error al registrar en auditoría", e);
         }
 
-        return fechaLogout;
-
+        return fechaLogout; // Retornar la fecha de cierre de sesión
     }
+
+
 
 }
